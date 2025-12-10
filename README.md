@@ -11,7 +11,7 @@ User Interface for the Marketplace.
 
 ## Environment Setup
 1. Configure the variables:
-   - `VITE_API_URL`: URL of the Main API (default: `http://localhost:3001`)
+   - `VITE_API_URL`: URL of the MVP Marketplace API (default: `http://localhost:3001`)
 
 ## Running
 ```bash
@@ -26,7 +26,7 @@ docker run -p 5173:5173 mvp-front-marcketplace
 ```
 
 ## Docker Compose
-To run the entire system (Frontend + Main API + Secondary API + DB):
+To run the entire system (Frontend + MVP Marketplace API + MVP Marketplace Services + DB):
 ```bash
 docker-compose up --build
 ```
