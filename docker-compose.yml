@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: ecommerce_db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ecommerce_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  secondary-api:
+    build: ../mvp-marcketplace-services
+    container_name: secondary_api
+    volumes:
+      - ./secondary-api:/app
+      - /app/node_modules
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - FAKESTORE_URL=https://fakestoreapi.com
+      - VIACEP_URL=https://viacep.com.br/ws
+    command: npm run dev
+
+  main-api:
+    build: ../mvp-marcketplace-api
+    container_name: main_api
+    volumes:
+      - ./main-api:/app
+      - /app/node_modules
+    ports:
+      - "3001:3001"
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/ecommerce_db?schema=public
+      - SECONDARY_API_URL=http://secondary-api:3002
+      - PORT=3001
+    depends_on:
+      - db
+      - secondary-api
+    command: >
+      sh -c "npx prisma db push && npm run dev"
+
+  frontend:
+    build: ../mvp-front-marcketplace
+    container_name: frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:3001
+    depends_on:
+      - main-api
+
+volumes:
+  postgres_data:
