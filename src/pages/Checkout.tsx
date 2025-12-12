@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { getAddressByCep, createOrder, registerUser } from '../services/api';
+import React, { useState, useEffect } from 'react';
+import { getAddressByCep, createOrder, registerUser, getUserByEmail, updateUser } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import {
     TextField,
@@ -13,7 +13,10 @@ import {
     Divider,
     Alert,
     CircularProgress,
+    IconButton,
 } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import type { AxiosError } from 'axios';
 
 const Checkout: React.FC = () => {
     const [cep, setCep] = useState('');
@@ -22,9 +25,20 @@ const Checkout: React.FC = () => {
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [cart, setCart] = useState<any[]>([]);
 
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const storedCart = JSON.parse(localStorage.getItem('cart') || '[]');
+        setCart(storedCart);
+    }, []);
+
+    const handleRemoveItem = (index: number) => {
+        const newCart = cart.filter((_, i) => i !== index);
+        setCart(newCart);
+        localStorage.setItem('cart', JSON.stringify(newCart));
+    };
 
     const handleCepSearch = async () => {
         if (cep.length < 8) return;
@@ -48,8 +62,19 @@ const Checkout: React.FC = () => {
 
         setLoading(true);
         try {
-            // 1. Register User (Mock auth)
-            const user = await registerUser({ name, email });
+            // 1. Check if user exists
+            let user;
+            try {
+                user = await getUserByEmail(email);
+                user = await updateUser(user.id, { name, email });
+            } catch (error: AxiosError | any) {
+
+                if (error.response?.status === 404) {
+                    user = await registerUser({ name, email });
+                } else {
+                    throw error;
+                }
+            }
 
             // 2. Create Order
             const total = cart.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0);
@@ -118,6 +143,9 @@ const Checkout: React.FC = () => {
                         <ListItem key={idx} sx={{ py: 1, px: 0 }}>
                             <ListItemText primary={item.title} secondary={`Price: $${item.price}`} />
                             <Typography variant="body2">${item.price}</Typography>
+                            <IconButton onClick={() => handleRemoveItem(idx)} color="error">
+                                <DeleteIcon />
+                            </IconButton>
                         </ListItem>
                     ))}
                     <Divider sx={{ my: 1 }} />

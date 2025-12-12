@@ -30,3 +30,18 @@ export const registerUser = async (userData: any) => {
     const response = await api.post('/users', userData);
     return response.data;
 };
+
+export const getUserByEmail = async (email: string) => {
+    const response = await api.get(`/users/email/${email}`);
+    return response.data;
+};
+
+export const updateUser = async (id: string, userData: any) => {
+    const response = await api.put(`/users/${id}`, userData);
+    return response.data;
+};
+
+export const deleteOrderItem = async (orderId: string, itemId: string) => {
+    const response = await api.delete(`/orders/${orderId}/items/${itemId}`);
+    return response.data;
+};
